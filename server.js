@@ -269,7 +269,13 @@ app.post('/save-donation', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+// --- KEEPER ALIVE ROUTE (For Cron-Job) ---
+app.get('/ping', (req, res) => {
+    res.send('Wake up!');
+});
+
 app.listen(PORT, () => {
     // Ye line change ki hai (Safe Tarika)
     console.log("Server is running on port " + PORT);
 });
+
