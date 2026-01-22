@@ -202,7 +202,7 @@ app.post('/search', async (req, res) => {
 
         // ✅ FIX: Backticks (`) lagaye hain taaki error na aaye
         if (!mobile || mobile.length !== 10) {
-            return res.send(<script>alert("⚠️ Error: Mobile Number must be 10 digits!"); window.location.href = "/dashboard";</script>);
+            return res.send("⚠️ Error: Mobile Number must be 10 digits!"); window.location.href = "/dashboard";</script>);
         }
 
         const donor = await Donor.findOne({ mobile: mobile });
@@ -321,6 +321,7 @@ app.listen(PORT, () => {
     console.log("Server is running on port " + PORT);
 
 });
+
 
 
 
