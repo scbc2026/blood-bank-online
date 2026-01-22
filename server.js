@@ -190,38 +190,93 @@ app.get('/dashboard', (req, res) => {
 });
 
 // --- SEARCH & SAVE (Same as before) ---
+// ==========================================
+// 🔍 SEARCH DONOR ROUTE (DEBUGGED & FIXED)
+// ==========================================
 app.post('/search', async (req, res) => {
-    const mobile = req.body.mobile;
-    if (mobile.length !== 10) return res.send("<h1>⚠️ Error: Mobile Number must be 10 digits! <a href='/dashboard'>Try Again</a></h1>");
+    try {
+        const mobile = req.body.mobile;
 
-    const donor = await Donor.findOne({ mobile: mobile });
-    let history = [];
-    let isBlocked = false;
-    let alertMessage = "";
+        // 1. Mobile Check
+        if (!mobile || mobile.length !== 10) {
+            return res.send(<script>alert("⚠️ Error: Mobile Number must be 10 digits!"); window.location.href = "/dashboard";</script>);
+        }
 
-    if (donor) {
-        history = await Donation.find({ donorId: donor._id }).sort({ donationDate: -1 });
-        if (history.length > 0) {
-            const lastDonation = history[0];
-            const diffTime = Math.abs(new Date() - lastDonation.donationDate);
-            const diffMonths = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) / 30.44; 
+        // 2. Database Find
+        const donor = await Donor.findOne({ mobile: mobile });
+        
+        let history = [];
+        let isBlocked = false;
+        let isWarning = false;
+        let alertMessage = "";
 
-            if (donor.gender === 'Male' && diffMonths < 3) {
-                isBlocked = true;
-                alertMessage = "STOP: Male Donor. Less than 3 months gap.";
-            }
-            if (donor.gender === 'Female' && diffMonths < 4) {
-                isBlocked = true;
-                alertMessage = "STOP: Female Donor. Less than 4 months gap.";
-            }
-            if (['Reactive'].includes(lastDonation.hiv) || ['Reactive'].includes(lastDonation.hbsag) || 
-                ['Reactive'].includes(lastDonation.hcv) || ['Reactive'].includes(lastDonation.syphilis)) {
-                isBlocked = true;
-                alertMessage = "CRITICAL ALERT: Previous History was REACTIVE.";
+        if (donor) {
+            // Sort by Date (Newest First)
+            history = await Donation.find({ donorId: donor._id }).sort({ donationDate: -1 });
+            
+            if (history.length > 0) {
+                const lastDonation = history[0];
+                
+                // --- 🛠️ DATE CALCULATION FIX ---
+                const today = new Date();
+                const lastDate = new Date(lastDonation.donationDate); // Force convert to Date
+                
+                // Time Difference in Milliseconds
+                const diffTime = Math.abs(today - lastDate);
+                // Convert to Days (1000ms * 60s * 60m * 24h)
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                // LOGS: Check Render Logs (Black Screen) to see this
+                console.log(Checking Donor: ${donor.name});
+                console.log(Last Donation: ${lastDate.toDateString()});
+                console.log(Today: ${today.toDateString()});
+                console.log(Gap in Days: ${diffDays});
+                console.log(Gender: ${donor.gender});
+
+                // --- RULE 1: GAP CHECK (Days Logic is safer) ---
+                // Male = 90 Days (3 Months), Female = 120 Days (4 Months)
+                
+                if (donor.gender === 'Male' && diffDays < 90) {
+                    isBlocked = true;
+                    alertMessage = STOP: Male Donor. Gap is only ${diffDays} days (Required: 90 days).;
+                }
+                else if (donor.gender === 'Female' && diffDays < 120) {
+                    isBlocked = true;
+                    alertMessage = STOP: Female Donor. Gap is only ${diffDays} days (Required: 120 days).;
+                }
+
+                // --- RULE 2: PERMANENT BLOCK (TTI) ---
+                else if (['Reactive', 'Positive'].includes(lastDonation.hiv) || 
+                         ['Reactive', 'Positive'].includes(lastDonation.hbsag) || 
+                         ['Reactive', 'Positive'].includes(lastDonation.hcv) || 
+                         ['Reactive', 'Positive'].includes(lastDonation.syphilis)) {
+                    
+                    isBlocked = true;
+                    alertMessage = "CRITICAL MEDICAL ALERT: Previous History was REACTIVE. Donation Blocked.";
+                }
+
+                // --- RULE 3: MALARIA WARNING ---
+                else if (lastDonation.malaria === 'Reactive' || lastDonation.malaria === 'Positive') {
+                    isWarning = true;
+                    alertMessage = "Previous Donation was MALARIA POSITIVE. Verify fitness.";
+                }
             }
         }
+        
+        const donorData = donor || { mobile: mobile, name: '', fatherName: '', age: '', gender: '', bloodGroup: '', address: '' };
+
+        res.render('donationForm', { 
+            donor: donorData, 
+            history: history, 
+            isBlocked: isBlocked, 
+            isWarning: isWarning, 
+            alertMessage: alertMessage 
+        });
+
+    } catch (error) {
+        console.error("Search Error:", error);
+        res.send("Server Error: Something went wrong.");
     }
-    res.render('donationForm', { donor: donor || { mobile: mobile }, history, isBlocked, alertMessage });
 });
 
 app.post('/save-donation', async (req, res) => {
@@ -272,4 +327,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     // Ye line change ki hai (Safe Tarika)
     console.log("Server is running on port " + PORT);
+
 });
