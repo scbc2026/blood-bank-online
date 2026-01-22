@@ -194,19 +194,17 @@ app.get('/dashboard', (req, res) => {
 // 🔍 SEARCH DONOR ROUTE (DEBUGGED & FIXED)
 // ==========================================
 // ==========================================
-// ==========================================
-// 🔍 SEARCH DONOR ROUTE (CORRECTED)
+// 🔍 SEARCH DONOR ROUTE (START)
 // ==========================================
 app.post('/search', async (req, res) => {
     try {
         const mobile = req.body.mobile;
 
-        // 1. Mobile Check (QUOTES FIXED HERE)
+        // ✅ FIX: Backticks (`) lagaye hain taaki error na aaye
         if (!mobile || mobile.length !== 10) {
             return res.send(<script>alert("⚠️ Error: Mobile Number must be 10 digits!"); window.location.href = "/dashboard";</script>);
         }
 
-        // 2. Database Find
         const donor = await Donor.findOne({ mobile: mobile });
         
         let history = [];
@@ -220,7 +218,7 @@ app.post('/search', async (req, res) => {
             if (history.length > 0) {
                 const lastDonation = history[0];
                 
-                // --- DATE CALCULATION FIX ---
+                // --- DATE FIX ---
                 const today = new Date();
                 const lastDate = new Date(lastDonation.donationDate);
                 const diffTime = Math.abs(today - lastDate);
@@ -270,6 +268,9 @@ app.post('/search', async (req, res) => {
         res.send("Server Error: Something went wrong.");
     }
 });
+// ==========================================
+// 🔍 SEARCH DONOR ROUTE (END)
+// ==========================================
 app.post('/save-donation', async (req, res) => {
     try {
         if (req.body.mobile.length !== 10) return res.send("Error: Mobile must be 10 digits");
@@ -320,5 +321,6 @@ app.listen(PORT, () => {
     console.log("Server is running on port " + PORT);
 
 });
+
 
 
