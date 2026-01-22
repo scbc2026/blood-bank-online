@@ -196,13 +196,17 @@ app.get('/dashboard', (req, res) => {
 // ==========================================
 // 🔍 SEARCH DONOR ROUTE (START)
 // ==========================================
+// ==========================================
+// 🔍 SEARCH DONOR ROUTE (FINAL FIX)
+// ==========================================
 app.post('/search', async (req, res) => {
     try {
         const mobile = req.body.mobile;
 
-        // ✅ FIX: Backticks (`) lagaye hain taaki error na aaye
+        // ✅ FIX: Maine yahan sadharan Double Quotes " " laga diye hain.
+        // Ab computer confuse nahi hoga.
         if (!mobile || mobile.length !== 10) {
-            return res.send("⚠️ Error: Mobile Number must be 10 digits!"); window.location.href = "/dashboard";</script>);
+            return res.send("<script>alert('⚠️ Error: Mobile Number must be 10 digits!'); window.location.href = '/dashboard';</script>");
         }
 
         const donor = await Donor.findOne({ mobile: mobile });
@@ -224,16 +228,16 @@ app.post('/search', async (req, res) => {
                 const diffTime = Math.abs(today - lastDate);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                console.log(Checking Gap for: ${donor.name}, Days: ${diffDays});
+                console.log("Checking Gap (Days): " + diffDays);
 
                 // --- RULE 1: GAP CHECK ---
                 if (donor.gender === 'Male' && diffDays < 90) {
                     isBlocked = true;
-                    alertMessage = STOP: Male Donor. Gap is only ${diffDays} days (Required: 90 days).;
+                    alertMessage = "STOP: Male Donor. Gap is less than 3 months (" + diffDays + " days).";
                 }
                 else if (donor.gender === 'Female' && diffDays < 120) {
                     isBlocked = true;
-                    alertMessage = STOP: Female Donor. Gap is only ${diffDays} days (Required: 120 days).;
+                    alertMessage = "STOP: Female Donor. Gap is less than 4 months (" + diffDays + " days).";
                 }
 
                 // --- RULE 2: PERMANENT BLOCK ---
@@ -321,6 +325,7 @@ app.listen(PORT, () => {
     console.log("Server is running on port " + PORT);
 
 });
+
 
 
 
