@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - SCBC Guna</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #e9ecef; display: flex; flex-direction: column; align-items: center; height: 100vh; margin:0; }
+        .header { width: 100%; background: #d9534f; color: white; padding: 20px 0; text-align: center; font-size: 26px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 50px; }
+        .login-box { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 320px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #d9534f; color: white; border: none; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #c9302c; }
+    </style>
+</head>
+<body>
+    <div class="header">🩸 Shiva Charitable Blood Centre, Guna</div>
+    
+    <div class="login-box">
+        <h2 style="color:#555; margin-top:0;">Staff/Admin Login</h2>
+        <form action="/login" method="POST">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Secure Login</button>
+        </form>
+        <p style="margin-top:20px; font-size:14px;"><a href="/signup" style="color:#0275d8; text-decoration:none;">New Staff Registration</a></p>
+    </div>
+</body>
+</html>
