@@ -193,11 +193,14 @@ app.get('/dashboard', (req, res) => {
 // ==========================================
 // 🔍 SEARCH DONOR ROUTE (DEBUGGED & FIXED)
 // ==========================================
+// ==========================================
+// 🔍 SEARCH DONOR ROUTE (FIXED)
+// ==========================================
 app.post('/search', async (req, res) => {
     try {
         const mobile = req.body.mobile;
 
-        // 1. Mobile Check
+        // 1. Mobile Check (FIXED QUOTES HERE)
         if (!mobile || mobile.length !== 10) {
             return res.send(<script>alert("⚠️ Error: Mobile Number must be 10 digits!"); window.location.href = "/dashboard";</script>);
         }
@@ -211,31 +214,20 @@ app.post('/search', async (req, res) => {
         let alertMessage = "";
 
         if (donor) {
-            // Sort by Date (Newest First)
             history = await Donation.find({ donorId: donor._id }).sort({ donationDate: -1 });
             
             if (history.length > 0) {
                 const lastDonation = history[0];
                 
-                // --- 🛠️ DATE CALCULATION FIX ---
+                // --- DATE CALCULATION FIX ---
                 const today = new Date();
-                const lastDate = new Date(lastDonation.donationDate); // Force convert to Date
-                
-                // Time Difference in Milliseconds
+                const lastDate = new Date(lastDonation.donationDate);
                 const diffTime = Math.abs(today - lastDate);
-                // Convert to Days (1000ms * 60s * 60m * 24h)
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                // LOGS: Check Render Logs (Black Screen) to see this
-                console.log(Checking Donor: ${donor.name});
-                console.log(Last Donation: ${lastDate.toDateString()});
-                console.log(Today: ${today.toDateString()});
-                console.log(Gap in Days: ${diffDays});
-                console.log(Gender: ${donor.gender});
+                console.log(Checking Gap for: ${donor.name}, Days: ${diffDays});
 
-                // --- RULE 1: GAP CHECK (Days Logic is safer) ---
-                // Male = 90 Days (3 Months), Female = 120 Days (4 Months)
-                
+                // --- RULE 1: GAP CHECK ---
                 if (donor.gender === 'Male' && diffDays < 90) {
                     isBlocked = true;
                     alertMessage = STOP: Male Donor. Gap is only ${diffDays} days (Required: 90 days).;
@@ -245,12 +237,11 @@ app.post('/search', async (req, res) => {
                     alertMessage = STOP: Female Donor. Gap is only ${diffDays} days (Required: 120 days).;
                 }
 
-                // --- RULE 2: PERMANENT BLOCK (TTI) ---
+                // --- RULE 2: PERMANENT BLOCK ---
                 else if (['Reactive', 'Positive'].includes(lastDonation.hiv) || 
                          ['Reactive', 'Positive'].includes(lastDonation.hbsag) || 
                          ['Reactive', 'Positive'].includes(lastDonation.hcv) || 
                          ['Reactive', 'Positive'].includes(lastDonation.syphilis)) {
-                    
                     isBlocked = true;
                     alertMessage = "CRITICAL MEDICAL ALERT: Previous History was REACTIVE. Donation Blocked.";
                 }
@@ -278,7 +269,6 @@ app.post('/search', async (req, res) => {
         res.send("Server Error: Something went wrong.");
     }
 });
-
 app.post('/save-donation', async (req, res) => {
     try {
         if (req.body.mobile.length !== 10) return res.send("Error: Mobile must be 10 digits");
@@ -329,3 +319,4 @@ app.listen(PORT, () => {
     console.log("Server is running on port " + PORT);
 
 });
+
