@@ -190,40 +190,88 @@ app.get('/dashboard', (req, res) => {
 });
 
 // --- SEARCH & SAVE (Same as before) ---
+// ==========================================
+// 🔍 SEARCH DONOR ROUTE (UPDATED LOGIC)
+// ==========================================
 app.post('/search', async (req, res) => {
-    const mobile = req.body.mobile;
-    if (mobile.length !== 10) return res.send("<h1>⚠️ Error: Mobile Number must be 10 digits! <a href='/dashboard'>Try Again</a></h1>");
+    try {
+        const mobile = req.body.mobile;
 
-    const donor = await Donor.findOne({ mobile: mobile });
-    let history = [];
-    let isBlocked = false;
-    let alertMessage = "";
+        // 1. Mobile Number Check
+        if (!mobile || mobile.length !== 10) {
+            return res.send(`
+                <script>
+                    alert("⚠️ Error: Mobile Number must be 10 digits!");
+                    window.location.href = "/dashboard";
+                </script>
+            `);
+        }
 
-    if (donor) {
-        history = await Donation.find({ donorId: donor._id }).sort({ donationDate: -1 });
-        if (history.length > 0) {
-            const lastDonation = history[0];
-            const diffTime = Math.abs(new Date() - lastDonation.donationDate);
-            const diffMonths = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) / 30.44; 
+        // 2. Database se Donor dhundo
+        const donor = await Donor.findOne({ mobile: mobile });
+        
+        let history = [];
+        let isBlocked = false;       // Red Alert ke liye
+        let isWarning = false;       // Yellow Alert ke liye
+        let alertMessage = "";
 
-            if (donor.gender === 'Male' && diffMonths < 3) {
-                isBlocked = true;
-                alertMessage = "STOP: Male Donor. Less than 3 months gap.";
-            }
-            if (donor.gender === 'Female' && diffMonths < 4) {
-                isBlocked = true;
-                alertMessage = "STOP: Female Donor. Less than 4 months gap.";
-            }
-            if (['Reactive'].includes(lastDonation.hiv) || ['Reactive'].includes(lastDonation.hbsag) || 
-                ['Reactive'].includes(lastDonation.hcv) || ['Reactive'].includes(lastDonation.syphilis)) {
-                isBlocked = true;
-                alertMessage = "CRITICAL ALERT: Previous History was REACTIVE.";
+        if (donor) {
+            // Purani history nikalo (Newest first)
+            history = await Donation.find({ donorId: donor._id }).sort({ donationDate: -1 });
+            
+            if (history.length > 0) {
+                const lastDonation = history[0];
+                
+                // --- RULE 1: GAP CHECK (3 Months Male / 4 Months Female) ---
+                const diffTime = Math.abs(new Date() - lastDonation.donationDate);
+                const diffMonths = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) / 30.44; 
+
+                if (donor.gender === 'Male' && diffMonths < 3) {
+                    isBlocked = true;
+                    alertMessage = STOP: Male Donor. Last donation was only ${diffMonths.toFixed(1)} months ago. (Gap < 3 months);
+                }
+                else if (donor.gender === 'Female' && diffMonths < 4) {
+                    isBlocked = true;
+                    alertMessage = STOP: Female Donor. Last donation was only ${diffMonths.toFixed(1)} months ago. (Gap < 4 months);
+                }
+
+                // --- RULE 2: PERMANENT BLOCK (HIV, HBsAg, HCV, Syphilis) ---
+                // Malaria ko yahan se hata diya hai
+                else if (['Reactive'].includes(lastDonation.hiv) || 
+                    ['Reactive'].includes(lastDonation.hbsag) || 
+                    ['Reactive'].includes(lastDonation.hcv) || 
+                    ['Reactive'].includes(lastDonation.syphilis)) {
+                    
+                    isBlocked = true;
+                    alertMessage = "CRITICAL MEDICAL ALERT: Previous History was REACTIVE for TTI (HIV/HBsAg/HCV/Syphilis). Donation Blocked.";
+                }
+
+                // --- RULE 3: MALARIA WARNING (Yellow Alert) ---
+                // Agar Block nahi hai, tabhi Malaria check karega
+                else if (lastDonation.malaria === 'Reactive') {
+                    isWarning = true;
+                    alertMessage = "Previous Donation was MALARIA POSITIVE. Please verify current medical fitness before donation.";
+                }
             }
         }
-    }
-    res.render('donationForm', { donor: donor || { mobile: mobile }, history, isBlocked, alertMessage });
-});
+        
+        // Agar naya donor hai (database me nahi hai), to temporary object banao
+        const donorData = donor || { mobile: mobile, name: '', fatherName: '', age: '', gender: '', bloodGroup: '', address: '' };
 
+        // Form Render karo (Variables bhej rahe hain)
+        res.render('donationForm', { 
+            donor: donorData, 
+            history: history, 
+            isBlocked: isBlocked, 
+            isWarning: isWarning, 
+            alertMessage: alertMessage 
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.send("Server Error: Something went wrong.");
+    }
+});
 app.post('/save-donation', async (req, res) => {
     try {
         if (req.body.mobile.length !== 10) return res.send("Error: Mobile must be 10 digits");
@@ -278,4 +326,5 @@ app.listen(PORT, () => {
     // Ye line change ki hai (Safe Tarika)
     console.log("Server is running on port " + PORT);
 });
+
 
