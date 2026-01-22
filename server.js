@@ -194,13 +194,14 @@ app.get('/dashboard', (req, res) => {
 // 🔍 SEARCH DONOR ROUTE (DEBUGGED & FIXED)
 // ==========================================
 // ==========================================
-// 🔍 SEARCH DONOR ROUTE (FIXED)
+// ==========================================
+// 🔍 SEARCH DONOR ROUTE (CORRECTED)
 // ==========================================
 app.post('/search', async (req, res) => {
     try {
         const mobile = req.body.mobile;
 
-        // 1. Mobile Check (FIXED QUOTES HERE)
+        // 1. Mobile Check (QUOTES FIXED HERE)
         if (!mobile || mobile.length !== 10) {
             return res.send(<script>alert("⚠️ Error: Mobile Number must be 10 digits!"); window.location.href = "/dashboard";</script>);
         }
@@ -319,4 +320,5 @@ app.listen(PORT, () => {
     console.log("Server is running on port " + PORT);
 
 });
+
 
