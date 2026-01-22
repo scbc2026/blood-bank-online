@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Records - SCBC</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; margin:0; }
+        .header { background: #2c3e50; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .container { padding: 20px; }
+        table { width: 100%; background: white; border-collapse: collapse; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px 15px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
+        th { background: #3498db; color: white; }
+        tr:hover { background: #f1f1f1; }
+        .search-input { padding: 10px; width: 300px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        /* New Button Styles */
+        .btn-action { text-decoration: none; padding: 5px 10px; border-radius: 4px; color: white; font-size: 12px; margin-right: 5px; }
+        .btn-edit { background-color: #f39c12; }
+        .btn-del { background-color: #e74c3c; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h3>📋 All Donation Records</h3>
+        <a href="/admin-panel" style="color: white; text-decoration: none;">&larr; Back to Dashboard</a>
+    </div>
+
+    <div class="container">
+        <input type="text" id="searchInput" onkeyup="filterTable()" class="search-input" placeholder="Search by Name or Mobile...">
+
+        <table id="recordsTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Donor Name</th>
+                    <th>Mobile</th>
+                    <th>Bag No</th>
+                    <th>Type</th>
+                    <th>TTI Result</th>
+                    <th>Action (Admin)</th> </tr>
+            </thead>
+            <tbody>
+                <% donations.forEach(d => { %>
+                <tr>
+                    <td><%= d.donationDate.toDateString() %></td>
+                    <td><%= d.donorId ? d.donorId.name : 'Unknown' %></td>
+                    <td><%= d.donorId ? d.donorId.mobile : '-' %></td>
+                    <td><%= d.bagNumber %></td>
+                    <td><%= d.donationType %></td>
+                    <td>
+                        <% if(d.hiv=='Reactive' || d.hbsag=='Reactive' || d.hcv=='Reactive' || d.syphilis=='Reactive') { %>
+                            <span style="color:red; font-weight:bold;">REACTIVE</span>
+                        <% } else if(d.malaria=='Positive') { %>
+                            <span style="color:orange; font-weight:bold;">Malaria+</span>
+                        <% } else { %>
+                            <span style="color:green;">Safe</span>
+                        <% } %>
+                    </td>
+                    <td>
+                        <a href="/edit-donation/<%= d._id %>" class="btn-action btn-edit">✏️ Edit</a>
+                        
+                        <a href="/delete-donation/<%= d._id %>" class="btn-action btn-del" onclick="return confirm('Are you sure you want to PERMANENTLY delete this record?');">🗑️ Delete</a>
+                    </td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function filterTable() {
+            var input, filter, table, tr, td, i, txtValue;
+            input = document.getElementById("searchInput");
+            filter = input.value.toUpperCase();
+            table = document.getElementById("recordsTable");
+            tr = table.getElementsByTagName("tr");
+            for (i = 0; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td")[1]; // Name
+                td2 = tr[i].getElementsByTagName("td")[2]; // Mobile
+                td3 = tr[i].getElementsByTagName("td")[3]; // Bag No
+                if (td || td2 || td3) {
+                    txtValue = (td.textContent || td.innerText) + (td2.textContent || td2.innerText) + (td3.textContent || td3.innerText);
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }       
+            }
+        }
+    </script>
+</body>
+</html>
