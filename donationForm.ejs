@@ -20,8 +20,8 @@
 
         /* DISABLED STATE STYLE */
         .form-disabled {
-            opacity: 0.6; 
-            pointer-events: none; 
+            opacity: 0.6; /* Thoda dhundhla dikhega */
+            pointer-events: none; /* Click nahi hoga */
             background-color: #f8f9fa;
         }
 
@@ -42,7 +42,7 @@
             <% if (isBlocked) { %>
                 <div class="alert-box alert-danger">
                     🛑 STOP: <%= alertMessage %> <br>
-                    <small>(Entry Disabled due to Medical History)</small>
+                    <small>(Form is visible for reference but Entry is Disabled)</small>
                 </div>
             <% } else if (isWarning) { %>
                 <div class="alert-box alert-warning">
@@ -68,11 +68,11 @@
                     <div class="row">
                         <div class="input-group">
                             <label>Donor Name <span style="color:red">*</span></label>
-                            <input type="text" name="name" value="<%= donor.name %>" required placeholder="Enter Full Name">
+                            <input type="text" name="name" value="<%= donor.name %>" required>
                         </div>
                         <div class="input-group">
                             <label>Father's Name <span style="color:red">*</span></label>
-                            <input type="text" name="fatherName" value="<%= donor.fatherName %>" required placeholder="Enter Father's Name">
+                            <input type="text" name="fatherName" value="<%= donor.fatherName %>" required>
                         </div>
                     </div>
 
@@ -83,12 +83,12 @@
                         </div>
                         <div class="input-group">
                             <label>Age <span style="color:red">*</span></label>
-                            <input type="number" name="age" value="<%= donor.age %>" required placeholder="Years">
+                            <input type="number" name="age" value="<%= donor.age %>" required>
                         </div>
                         <div class="input-group">
                             <label>Gender <span style="color:red">*</span></label>
                             <select name="gender" required>
-                                <option value="">Select Gender</option>
+                                <option value="">Select</option>
                                 <option value="Male" <%= donor.gender == 'Male' ? 'selected' : '' %>>Male</option>
                                 <option value="Female" <%= donor.gender == 'Female' ? 'selected' : '' %>>Female</option>
                             </select>
@@ -99,20 +99,14 @@
                         <div class="input-group">
                             <label>Blood Group <span style="color:red">*</span></label>
                             <select name="bloodGroup" required>
-                                <option value="">Select Group</option>
-                                <option value="A+" <%= donor.bloodGroup == 'A+' ? 'selected' : '' %>>A+</option>
-                                <option value="B+" <%= donor.bloodGroup == 'B+' ? 'selected' : '' %>>B+</option>
-                                <option value="O+" <%= donor.bloodGroup == 'O+' ? 'selected' : '' %>>O+</option>
-                                <option value="AB+" <%= donor.bloodGroup == 'AB+' ? 'selected' : '' %>>AB+</option>
-                                <option value="A-" <%= donor.bloodGroup == 'A-' ? 'selected' : '' %>>A-</option>
-                                <option value="B-" <%= donor.bloodGroup == 'B-' ? 'selected' : '' %>>B-</option>
-                                <option value="O-" <%= donor.bloodGroup == 'O-' ? 'selected' : '' %>>O-</option>
-                                <option value="AB-" <%= donor.bloodGroup == 'AB-' ? 'selected' : '' %>>AB-</option>
+                                <option value="<%= donor.bloodGroup %>"><%= donor.bloodGroup || 'Select' %></option>
+                                <option value="A+">A+</option><option value="B+">B+</option><option value="O+">O+</option><option value="AB+">AB+</option>
+                                <option value="A-">A-</option><option value="B-">B-</option><option value="O-">O-</option><option value="AB-">AB-</option>
                             </select>
                         </div>
                         <div class="input-group">
                             <label>Address <span style="color:red">*</span></label>
-                            <input type="text" name="address" value="<%= donor.address %>" required placeholder="City / Village">
+                            <input type="text" name="address" value="<%= donor.address %>" required>
                         </div>
                     </div>
 
