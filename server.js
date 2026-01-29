@@ -51,7 +51,8 @@ const donationSchema = new mongoose.Schema({
     hcv: { type: String, default: 'Non-Reactive' },
     syphilis: { type: String, default: 'Non-Reactive' },
     malaria: { type: String, default: 'Non-Reactive' },
-    remark: String
+    remark: String,
+    enteredBy: String 
 });
 const Donation = mongoose.model('Donation', donationSchema);
 
@@ -87,6 +88,7 @@ app.post('/login', async (req, res) => {
         req.session.userId = user._id;
         req.session.role = user.role;
         res.redirect(user.role === 'Admin' ? '/admin-panel' : '/dashboard');
+        re.session.staffName = user.username;
     } else {
         res.send("<script>alert('Wrong Password'); window.location.href='/';</script>");
     }
@@ -260,7 +262,8 @@ app.post('/save-donation', async (req, res) => {
             hcv: req.body.hcv,
             syphilis: req.body.syphilis,
             malaria: req.body.malaria,
-            remark: req.body.remark
+            remark: req.body.remark,
+            enteredBy: req.session.staffName || "Admin"
         });
 
         await newDonation.save();
@@ -272,4 +275,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     // Ye line change ki hai (Safe Tarika)
     console.log("Server is running on port " + PORT);
+
 });
