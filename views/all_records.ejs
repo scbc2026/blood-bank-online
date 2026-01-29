@@ -37,7 +37,9 @@
                     <th>Bag No</th>
                     <th>Type</th>
                     <th>TTI Result</th>
-                    <th>Action (Admin)</th> </tr>
+                     <th>Enter By</th>
+                    <th>Action (Admin)</th>
+                    </tr>
             </thead>
             <tbody>
                 <% donations.forEach(d => { %>
@@ -56,6 +58,9 @@
                             <span style="color:green;">Safe</span>
                         <% } %>
                     </td>
+                     <td>
+                         <%= item.enteredBy || 'Old Data' %>
+                      </td>
                     <td>
                         <a href="/edit-donation/<%= d._id %>" class="btn-action btn-edit">✏️ Edit</a>
                         
@@ -90,4 +95,5 @@
         }
     </script>
 </body>
+
 </html>
