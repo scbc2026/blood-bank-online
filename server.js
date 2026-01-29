@@ -87,8 +87,9 @@ app.post('/login', async (req, res) => {
         if (!user.isVerified && user.role === 'Staff') return res.send("<h1>Account Pending Verification</h1>");
         req.session.userId = user._id;
         req.session.role = user.role;
+         res.session.staffName = user.username;
         res.redirect(user.role === 'Admin' ? '/admin-panel' : '/dashboard');
-        res.session.staffName = user.username;
+       
     } else {
         res.send("<script>alert('Wrong Password'); window.location.href='/';</script>");
     }
@@ -277,4 +278,5 @@ app.listen(PORT, () => {
     console.log("Server is running on port " + PORT);
 
 });
+
 
