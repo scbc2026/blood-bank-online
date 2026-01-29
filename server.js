@@ -88,7 +88,7 @@ app.post('/login', async (req, res) => {
         req.session.userId = user._id;
         req.session.role = user.role;
         res.redirect(user.role === 'Admin' ? '/admin-panel' : '/dashboard');
-        re.session.staffName = user.username;
+        res.session.staffName = user.username;
     } else {
         res.send("<script>alert('Wrong Password'); window.location.href='/';</script>");
     }
@@ -277,3 +277,4 @@ app.listen(PORT, () => {
     console.log("Server is running on port " + PORT);
 
 });
+
