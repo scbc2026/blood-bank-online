@@ -7,7 +7,6 @@
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .search-box { background: white; padding: 40px; text-align: center; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 500px; margin: 80px auto; }
         
-        /* Input Field Styling */
         input { 
             padding: 15px; 
             width: 65%; 
@@ -19,7 +18,6 @@
         }
         input:focus { border-color: #d9534f; }
 
-        /* Button Styling */
         button { 
             padding: 16px 25px; 
             font-size: 16px; 
@@ -32,10 +30,24 @@
             transition: 0.3s;
         }
         button:hover { background: #c9302c; }
-
-        /* Helper Text */
         .note { font-size: 12px; color: #666; margin-top: 10px; display: block; }
     </style>
+
+    <script>
+        function validateSearch() {
+            // User jo number dalega usko pakdo
+            var inputVal = document.getElementById("searchInput").value;
+            var len = inputVal.length;
+
+            // Check: Agar length 10 nahi hai AUR 12 bhi nahi hai
+            if (len !== 10 && len !== 12) {
+                alert("⚠️ Error: Please enter exactly 10 digits (Mobile) or 12 digits (Aadhaar).");
+                return false; // Form submit hone se rok do
+            }
+            return true; // Jane do
+        }
+    </script>
+
 </head>
 <body>
 
@@ -48,15 +60,15 @@
         <h2 style="color: #333; margin-bottom: 10px;">🔍 Search Donor</h2>
         <p style="color: #777; margin-bottom: 25px;">Enter Mobile Number OR Aadhaar Number</p>
         
-        <form action="/search" method="POST">
-            <input type="number" name="mobile" 
+        <form action="/search" method="POST" onsubmit="return validateSearch()">
+            
+            <input type="number" id="searchInput" name="mobile" 
                    placeholder="Enter Mobile / Aadhaar" 
-                   required 
-                   title="Enter 10-digit Mobile or 12-digit Aadhaar">
+                   required>
             
             <button type="submit">Search</button>
             
-            <span class="note">System will automatically detect Mobile or Aadhaar.</span>
+            <span class="note">System allows only 10 or 12 digits.</span>
         </form>
     </div>
 
