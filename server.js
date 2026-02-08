@@ -1,5 +1,5 @@
 // ==========================================
-// SERVER.JS - 100% FIXED & TESTED
+// SERVER.JS - SAFE VERSION (Double Quotes Only)
 // ==========================================
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4']); 
@@ -85,7 +85,7 @@ app.get('/', (req, res) => {
     res.render('login');
 });
 
-// ✅ LOGIN ROUTE (FIXED)
+// ✅ LOGIN ROUTE (Safe Quotes)
 app.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -101,7 +101,7 @@ app.post('/login', async (req, res) => {
                 res.redirect(user.role === 'Admin' ? '/admin-panel' : '/dashboard');
             });
         } else {
-            // 👇 FIX 1: Added Quotes " "
+            // FIX: Using simple double quotes
             res.send("<script>alert('Wrong Password'); window.location.href='/';</script>");
         }
     } catch (e) { res.send("Error: " + e); }
@@ -190,14 +190,14 @@ app.get('/dashboard', (req, res) => {
 });
 
 // ==========================================
-// 🔍 SMART SEARCH (FIXED)
+// 🔍 SMART SEARCH (Safe Quotes)
 // ==========================================
 app.post('/search', async (req, res) => {
     try {
         const inputData = req.body.mobile; 
 
         if (!inputData || (inputData.length !== 10 && inputData.length !== 12)) {
-            // 👇 FIX 2: Added Quotes " "
+            // FIX: Using simple double quotes
             return res.send("<script>alert('⚠️ Error: Please enter valid 10-digit Mobile OR 12-digit Aadhaar Number!'); window.location.href = '/dashboard';</script>");
         }
 
@@ -309,7 +309,7 @@ app.post('/save-donation', async (req, res) => {
 });
 
 // ==========================================
-// 📤 BULK IMPORT ROUTE (FIXED)
+// 📤 BULK IMPORT ROUTE (FIXED - NO BACKTICKS)
 // ==========================================
 app.post('/import-data', upload.single('file'), async (req, res) => {
     if(!req.file) return res.send("Please upload a file");
@@ -361,8 +361,9 @@ app.post('/import-data', upload.single('file'), async (req, res) => {
                 }
 
                 fs.unlinkSync(req.file.path); 
-                // 👇 FIX 3: Backticks (`) used for variable
-                res.send(<script>alert("✅ ${successCount} Records Imported!"); window.location.href = "/admin-panel";</script>);
+                
+                // 👇 FIX: Using String concatenation (No backticks) to avoid errors
+                res.send("<script>alert('✅ " + successCount + " Records Imported!'); window.location.href = '/admin-panel';</script>");
 
             } catch (error) {
                 console.error(error);
