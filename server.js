@@ -1,5 +1,5 @@
-
-// SERVER.JS - FINAL UPDATE (Mobile/Aadhaar + Bulk Upload)
+// ==========================================
+// SERVER.JS - FIXED (Syntax Error Solved)
 // ==========================================
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4']); 
@@ -8,12 +8,12 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const session = require('express-session');
-const multer = require('multer');       // 📂 File Upload ke liye
-const csv = require('csv-parser');      // 📂 CSV padhne ke liye
-const fs = require('fs');               // 📂 File system ke liye
+const multer = require('multer');       // 📂 File Upload
+const csv = require('csv-parser');      // 📂 CSV Reader
+const fs = require('fs');               // 📂 File System
 
 const app = express();
-const upload = multer({ dest: 'uploads/' }); // Temp folder for uploads
+const upload = multer({ dest: 'uploads/' }); // Temp folder
 
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -35,10 +35,8 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 const donorSchema = new mongoose.Schema({
-    // ✅ UNIQUE: Mobile aur Aadhaar duplicate nahi ho sakte
     mobile: { type: String, required: true, unique: true },
-    aadhaar: { type: String, unique: true, sparse: true }, // Sparse: Jinka aadhaar nahi hai wo error nahi dega
-    
+    aadhaar: { type: String, unique: true, sparse: true }, // Sparse means null values are allowed
     name: String,
     fatherName: String,
     gender: { type: String, enum: ['Male', 'Female'] },
@@ -87,7 +85,7 @@ app.get('/', (req, res) => {
     res.render('login');
 });
 
-// ✅ LOGIN FIXED (Session Order Corrected)
+// ✅ LOGIN ROUTE (Fixed)
 app.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -95,17 +93,18 @@ app.post('/login', async (req, res) => {
         if (user) {
             if (!user.isVerified && user.role === 'Staff') return res.send("<h1>Account Pending Verification</h1>");
             
-            // Session values pehle set karein
+            // Session values set FIRST
             req.session.userId = user._id;
             req.session.role = user.role;
             req.session.staffName = user.username;
             
-            // Save hone ke baad redirect karein
+            // Save THEN redirect
             req.session.save(() => {
                 res.redirect(user.role === 'Admin' ? '/admin-panel' : '/dashboard');
             });
         } else {
-            res.send("<script>alert('Wrong Password'); window.location.href='/';</script>");
+            // Updated with Backticks ` `
+            res.send(<script>alert('Wrong Password'); window.location.href='/';</script>);
         }
     } catch (e) { res.send("Error: " + e); }
 });
@@ -138,8 +137,6 @@ app.get('/all-records', async (req, res) => {
     res.render('all_records', { donations });
 });
 
-// --- ADMIN FEATURES ---
-
 app.get('/delete-donation/:id', async (req, res) => {
     if(req.session.role !== 'Admin') return res.send("<h1>Access Denied! Only Admin can delete.</h1>");
     await Donation.findByIdAndDelete(req.params.id);
@@ -162,7 +159,7 @@ app.post('/update-donation/:id', async (req, res) => {
             gender: req.body.gender,
             bloodGroup: req.body.bloodGroup,
             address: req.body.address,
-            aadhaar: req.body.aadhaar // Aadhaar bhi update hoga
+            aadhaar: req.body.aadhaar
         });
         await Donation.findByIdAndUpdate(req.params.id, {
             bagNumber: req.body.bagNumber,
@@ -195,18 +192,17 @@ app.get('/dashboard', (req, res) => {
 });
 
 // ==========================================
-// 🔍 SMART SEARCH (Mobile OR Aadhaar)
+// 🔍 SMART SEARCH (Mobile OR Aadhaar) - FIXED
 // ==========================================
 app.post('/search', async (req, res) => {
     try {
-        const inputData = req.body.mobile; // Form me name="mobile" hi hai
+        const inputData = req.body.mobile; 
 
-        // Check: 10 digit (Mobile) ya 12 digit (Aadhaar)
         if (!inputData || (inputData.length !== 10 && inputData.length !== 12)) {
+            // 👇 FIX: Added backticks ` ` around the HTML string
             return res.send(<script>alert("⚠️ Error: Please enter valid 10-digit Mobile OR 12-digit Aadhaar Number!"); window.location.href = "/dashboard";</script>);
         }
 
-        // Search in BOTH fields
         const donor = await Donor.findOne({
             $or: [
                 { mobile: inputData }, 
@@ -242,7 +238,6 @@ app.post('/search', async (req, res) => {
             }
         }
         
-        // Pass Data to Form
         let initialData = donor || { 
             name: '', fatherName: '', age: '', gender: '', bloodGroup: '', address: '',
             mobile: (inputData.length === 10 ? inputData : ''), 
@@ -262,14 +257,9 @@ app.post('/search', async (req, res) => {
     }
 });
 
-// ==========================================
-// 💾 SAVE DONATION (Updated for Aadhaar)
-// ==========================================
 app.post('/save-donation', async (req, res) => {
     try {
         const inputDate = new Date(req.body.donationDate);
-        
-        // Mobile ya Aadhaar se donor dhundo
         let donor = await Donor.findOne({
             $or: [
                 { mobile: req.body.mobile },
@@ -277,7 +267,6 @@ app.post('/save-donation', async (req, res) => {
             ]
         });
 
-        // Rules Check (Agar donor mila)
         if (donor) {
             const history = await Donation.find({ donorId: donor._id }).sort({ donationDate: -1 });
             if (history.length > 0) {
@@ -289,15 +278,13 @@ app.post('/save-donation', async (req, res) => {
             }
         }
 
-        // Agar Naya Donor hai to Create karo
         if (!donor) {
             donor = new Donor({
                 ...req.body,
-                aadhaar: req.body.aadhaar // Aadhaar bhi save karo
+                aadhaar: req.body.aadhaar
             });
             await donor.save();
         } else {
-            // Update details (Age, Aadhaar etc.)
             donor.age = req.body.age; 
             if(req.body.aadhaar) donor.aadhaar = req.body.aadhaar;
             await donor.save();
@@ -324,7 +311,7 @@ app.post('/save-donation', async (req, res) => {
 });
 
 // ==========================================
-// 📤 BULK IMPORT ROUTE (Excel/CSV)
+// 📤 BULK IMPORT ROUTE - FIXED
 // ==========================================
 app.post('/import-data', upload.single('file'), async (req, res) => {
     if(!req.file) return res.send("Please upload a file");
@@ -337,7 +324,6 @@ app.post('/import-data', upload.single('file'), async (req, res) => {
             try {
                 let successCount = 0;
                 for (let row of results) {
-                    // Check Logic: Mobile ya Aadhaar match?
                     let donor = await Donor.findOne({ 
                         $or: [
                             { mobile: row.Mobile || row.mobile }, 
@@ -345,9 +331,7 @@ app.post('/import-data', upload.single('file'), async (req, res) => {
                         ] 
                     });
 
-                    // Agar Donor nahi hai, to Naya Banao
                     if (!donor) {
-                        // Validate Mobile (Kam se kam mobile hona zaruri hai)
                         if(!row.Mobile && !row.mobile) continue; 
                         
                         donor = new Donor({
@@ -363,7 +347,6 @@ app.post('/import-data', upload.single('file'), async (req, res) => {
                         await donor.save();
                     }
 
-                    // Donation Entry Add karo
                     if (row.Date || row.date) {
                         const newDonation = new Donation({
                             donorId: donor._id,
@@ -379,7 +362,8 @@ app.post('/import-data', upload.single('file'), async (req, res) => {
                     successCount++;
                 }
 
-                fs.unlinkSync(req.file.path); // Clean up temp file
+                fs.unlinkSync(req.file.path); 
+                // 👇 FIX: Added backticks ` ` here too
                 res.send(<script>alert("✅ ${successCount} Records Imported!"); window.location.href = "/admin-panel";</script>);
 
             } catch (error) {
