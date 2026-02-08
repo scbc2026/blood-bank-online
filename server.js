@@ -1,5 +1,5 @@
 // ==========================================
-// SERVER.JS - SAFE VERSION (Double Quotes Only)
+// SERVER.JS - FINAL CLEAN & STRICT VERSION
 // ==========================================
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4']); 
@@ -85,7 +85,7 @@ app.get('/', (req, res) => {
     res.render('login');
 });
 
-// ✅ LOGIN ROUTE (Safe Quotes)
+// ✅ LOGIN ROUTE
 app.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -101,7 +101,6 @@ app.post('/login', async (req, res) => {
                 res.redirect(user.role === 'Admin' ? '/admin-panel' : '/dashboard');
             });
         } else {
-            // FIX: Using simple double quotes
             res.send("<script>alert('Wrong Password'); window.location.href='/';</script>");
         }
     } catch (e) { res.send("Error: " + e); }
@@ -190,14 +189,13 @@ app.get('/dashboard', (req, res) => {
 });
 
 // ==========================================
-// 🔍 SMART SEARCH (Safe Quotes)
+// 🔍 SMART SEARCH
 // ==========================================
 app.post('/search', async (req, res) => {
     try {
         const inputData = req.body.mobile; 
 
         if (!inputData || (inputData.length !== 10 && inputData.length !== 12)) {
-            // FIX: Using simple double quotes
             return res.send("<script>alert('⚠️ Error: Please enter valid 10-digit Mobile OR 12-digit Aadhaar Number!'); window.location.href = '/dashboard';</script>");
         }
 
@@ -309,7 +307,7 @@ app.post('/save-donation', async (req, res) => {
 });
 
 // ==========================================
-// 📤 BULK IMPORT ROUTE (FIXED - NO BACKTICKS)
+// 📤 BULK IMPORT - CLEAN & STRICT MODE
 // ==========================================
 app.post('/import-data', upload.single('file'), async (req, res) => {
     if(!req.file) return res.send("Please upload a file");
@@ -319,56 +317,69 @@ app.post('/import-data', upload.single('file'), async (req, res) => {
         .pipe(csv())
         .on('data', (data) => results.push(data))
         .on('end', async () => {
-            try {
-                let successCount = 0;
-                for (let row of results) {
+            let successCount = 0;
+            let skipCount = 0;
+
+            for (let row of results) {
+                try {
+                    // 1. DATA CLEANING (Space Hatao)
+                    let cleanMobile = (row.Mobile || row.mobile || "").toString().trim();
+                    let cleanAadhaar = (row.Aadhaar || row.aadhaar || "").toString().trim();
+                    let cleanName = (row.Name || row.name || "").toString().trim();
+                    
+                    // Agar Mobile Empty hai to Skip
+                    if (!cleanMobile) {
+                        skipCount++;
+                        continue;
+                    }
+
+                    // 2. DONOR CHECK
                     let donor = await Donor.findOne({ 
                         $or: [
-                            { mobile: row.Mobile || row.mobile }, 
-                            { aadhaar: row.Aadhaar || row.aadhaar }
+                            { mobile: cleanMobile }, 
+                            { aadhaar: cleanAadhaar }
                         ] 
                     });
 
+                    // 3. CREATE NEW DONOR (If not found)
                     if (!donor) {
-                        if(!row.Mobile && !row.mobile) continue; 
-                        
                         donor = new Donor({
-                            name: row.Name || row.name,
-                            mobile: row.Mobile || row.mobile,
-                            aadhaar: row.Aadhaar || row.aadhaar,
-                            bloodGroup: row.BloodGroup || row.bloodGroup,
-                            address: row.Address || row.address,
-                            gender: row.Gender || row.gender,
-                            age: row.Age || row.age,
-                            fatherName: row.FatherName || row.fatherName
+                            name: cleanName,
+                            mobile: cleanMobile,
+                            aadhaar: cleanAadhaar,
+                            bloodGroup: (row.BloodGroup || row.bloodGroup || "").toString().trim(),
+                            address: (row.Address || row.address || "").toString().trim(),
+                            gender: (row.Gender || row.gender || "Male").toString().trim(),
+                            age: (row.Age || row.age || 0),
+                            fatherName: (row.FatherName || row.fatherName || "").toString().trim()
                         });
-                        await donor.save();
+                        await donor.save(); // Wait for save
                     }
 
-                    if (row.Date || row.date) {
+                    // 4. DONATION ENTRY
+                    let dateRaw = row.Date || row.date;
+                    if (dateRaw && donor._id) {
                         const newDonation = new Donation({
                             donorId: donor._id,
-                            donationDate: new Date(row.Date || row.date),
-                            bagNumber: row.BagNo || 'Old Record',
+                            donationDate: new Date(dateRaw),
+                            bagNumber: (row.BagNo || 'Old Record').toString(),
                             bloodGroup: donor.bloodGroup,
                             donationType: 'Voluntary',
-                            mobile: donor.mobile,
                             enteredBy: 'Bulk Import'
                         });
                         await newDonation.save();
+                        successCount++;
                     }
-                    successCount++;
+                } catch (err) {
+                    console.log("Error skipping row: " + err.message);
+                    skipCount++;
                 }
-
-                fs.unlinkSync(req.file.path); 
-                
-                // 👇 FIX: Using String concatenation (No backticks) to avoid errors
-                res.send("<script>alert('✅ " + successCount + " Records Imported!'); window.location.href = '/admin-panel';</script>");
-
-            } catch (error) {
-                console.error(error);
-                res.send("Error in Import: " + error.message);
             }
+
+            fs.unlinkSync(req.file.path); 
+            
+            // Safe Message Response
+            res.send("<script>alert('✅ Upload Complete! Success: " + successCount + " | Skipped/Error: " + skipCount + "'); window.location.href = '/admin-panel';</script>");
         });
 });
 
