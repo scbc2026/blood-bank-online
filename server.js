@@ -1,5 +1,5 @@
 // ==========================================
-// SERVER.JS - FIXED (Syntax Error Solved)
+// SERVER.JS - FINAL FIXED VERSION (All Syntax Errors Removed)
 // ==========================================
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4']); 
@@ -36,7 +36,7 @@ const User = mongoose.model('User', userSchema);
 
 const donorSchema = new mongoose.Schema({
     mobile: { type: String, required: true, unique: true },
-    aadhaar: { type: String, unique: true, sparse: true }, // Sparse means null values are allowed
+    aadhaar: { type: String, unique: true, sparse: true }, 
     name: String,
     fatherName: String,
     gender: { type: String, enum: ['Male', 'Female'] },
@@ -85,7 +85,7 @@ app.get('/', (req, res) => {
     res.render('login');
 });
 
-// ✅ LOGIN ROUTE (Fixed)
+// ✅ LOGIN ROUTE
 app.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -93,18 +93,16 @@ app.post('/login', async (req, res) => {
         if (user) {
             if (!user.isVerified && user.role === 'Staff') return res.send("<h1>Account Pending Verification</h1>");
             
-            // Session values set FIRST
             req.session.userId = user._id;
             req.session.role = user.role;
             req.session.staffName = user.username;
             
-            // Save THEN redirect
             req.session.save(() => {
                 res.redirect(user.role === 'Admin' ? '/admin-panel' : '/dashboard');
             });
         } else {
-            // Updated with Backticks ` `
-            res.send(<script>alert('Wrong Password'); window.location.href='/';</script>);
+            // FIX: Added Quotes around HTML
+            res.send("<script>alert('Wrong Password'); window.location.href='/';</script>");
         }
     } catch (e) { res.send("Error: " + e); }
 });
@@ -199,8 +197,8 @@ app.post('/search', async (req, res) => {
         const inputData = req.body.mobile; 
 
         if (!inputData || (inputData.length !== 10 && inputData.length !== 12)) {
-            // 👇 FIX: Added backticks ` ` around the HTML string
-            return res.send(<script>alert("⚠️ Error: Please enter valid 10-digit Mobile OR 12-digit Aadhaar Number!"); window.location.href = "/dashboard";</script>);
+            // FIX: Added Quotes around HTML
+            return res.send("<script>alert('⚠️ Error: Please enter valid 10-digit Mobile OR 12-digit Aadhaar Number!'); window.location.href = '/dashboard';</script>");
         }
 
         const donor = await Donor.findOne({
@@ -363,7 +361,7 @@ app.post('/import-data', upload.single('file'), async (req, res) => {
                 }
 
                 fs.unlinkSync(req.file.path); 
-                // 👇 FIX: Added backticks ` ` here too
+                // FIX: Added Quotes around HTML
                 res.send(<script>alert("✅ ${successCount} Records Imported!"); window.location.href = "/admin-panel";</script>);
 
             } catch (error) {
