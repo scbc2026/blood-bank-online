@@ -101,7 +101,7 @@ app.post('/login', async (req, res) => {
                 res.redirect(user.role === 'Admin' ? '/admin-panel' : '/dashboard');
             });
         } else {
-            // 👇 FIX: Added Quotes " "
+            // 👇 FIX 1: Added Quotes " "
             res.send("<script>alert('Wrong Password'); window.location.href='/';</script>");
         }
     } catch (e) { res.send("Error: " + e); }
@@ -197,7 +197,7 @@ app.post('/search', async (req, res) => {
         const inputData = req.body.mobile; 
 
         if (!inputData || (inputData.length !== 10 && inputData.length !== 12)) {
-            // 👇 FIX: Added Quotes " "
+            // 👇 FIX 2: Added Quotes " "
             return res.send("<script>alert('⚠️ Error: Please enter valid 10-digit Mobile OR 12-digit Aadhaar Number!'); window.location.href = '/dashboard';</script>");
         }
 
@@ -361,7 +361,7 @@ app.post('/import-data', upload.single('file'), async (req, res) => {
                 }
 
                 fs.unlinkSync(req.file.path); 
-                // 👇 FIX: Backticks (`) used for variable
+                // 👇 FIX 3: Backticks (`) used for variable
                 res.send(<script>alert("✅ ${successCount} Records Imported!"); window.location.href = "/admin-panel";</script>);
 
             } catch (error) {
