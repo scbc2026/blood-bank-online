@@ -86,8 +86,7 @@
                     <th>Bag No</th>
                     <th>Blood Group</th>
                     <th>TTI Result</th>
-                    <th>Action</th>
-                    <th>Enter By</th>
+                    <th>Enter By</th> <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -103,6 +102,7 @@
                             <td style="color: <%= isSafe ? 'green' : 'red' %>; font-weight: bold;">
                                 <%= isSafe ? 'Safe' : 'Reactive' %>
                             </td>
+                            <td><%= don.enteredBy || 'Admin' %></td> 
                             <td style="white-space: nowrap;">
                                 
                                 <button class="action-btn btn-view" onclick="openModal(this)"
@@ -127,7 +127,7 @@
                         </tr>
                     <% }) %>
                 <% } else { %>
-                    <tr><td colspan="7" style="text-align: center; padding: 20px;">No records found.</td></tr>
+                    <tr><td colspan="8" style="text-align: center; padding: 20px;">No records found.</td></tr>
                 <% } %>
             </tbody>
         </table>
@@ -199,7 +199,6 @@
             let donationCount = 0;
 
             allBtns.forEach(function(b) {
-                // Agar button ka mobile number click kiye gaye donor se match karta hai
                 if (mobile !== 'N/A' && b.getAttribute('data-mobile') === mobile) {
                     historyHtml += '<tr>';
                     historyHtml += '<td>' + b.getAttribute('data-date') + '</td>';
@@ -216,17 +215,13 @@
             });
             historyHtml += '</table>';
 
-            // Agar galti se kisi ka mobile nahi hai, to kam se kam current record dikha do
             if(donationCount === 0) {
                 historyHtml = '<p style="text-align:center; color:#777; margin:5px;">History not available.</p>';
                 donationCount = 1;
             }
 
-            // History aur Count ko Modal me dal do
             document.getElementById("m-history-table-container").innerHTML = historyHtml;
             document.getElementById("m-count").innerText = donationCount;
-
-            // Modal dikhao
             document.getElementById("donorModal").style.display = "flex";
         }
 
