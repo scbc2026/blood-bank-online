@@ -23,7 +23,7 @@
         .bg-badge { background: #d9534f; color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 12px; }
         
         .action-btn { padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer; color: white; text-decoration: none; font-size: 12px; margin-right: 5px; display: inline-block; }
-        .btn-view { background-color: #0275d8; } /* View Button Blue */
+        .btn-view { background-color: #0275d8; } 
         .btn-edit { background-color: #f0ad4e; }
         .btn-delete { background-color: #d9534f; }
 
@@ -33,15 +33,23 @@
             background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center;
         }
         .modal-box {
-            background: white; width: 450px; padding: 25px; border-radius: 8px; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative;
+            background: white; width: 500px; padding: 25px; border-radius: 8px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative; max-height: 90vh; overflow-y: auto;
         }
         .modal-header { font-size: 20px; font-weight: bold; color: #17a2b8; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
         .close-btn { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #888; border: none; background: none; }
         .close-btn:hover { color: red; }
-        .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; font-size: 15px; }
+        
+        .detail-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #eee; font-size: 14px; }
         .detail-label { font-weight: bold; color: #555; }
-        .detail-value { color: #222; text-align: right; }
+        .detail-value { color: #222; text-align: right; font-weight: 500; }
+
+        /* 📜 HISTORY TABLE IN MODAL */
+        .history-section { margin-top: 20px; background: #fdfdfd; border: 1px solid #ddd; border-radius: 5px; padding: 10px; }
+        .history-title { font-weight: bold; color: #d9534f; margin-bottom: 10px; font-size: 15px; border-bottom: 2px solid #d9534f; padding-bottom: 5px; display: inline-block;}
+        .history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .history-table th { background: #eee; color: #333; padding: 6px; border: 1px solid #ccc; text-align: center;}
+        .history-table td { padding: 6px; border: 1px solid #ccc; text-align: center; }
     </style>
 </head>
 <body>
@@ -78,28 +86,25 @@
                     <th>Bag No</th>
                     <th>Blood Group</th>
                     <th>TTI Result</th>
-                    <th>Action</th> <!-- Actions Column -->
+                    <th>Enter By</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
                 <% if(donations && donations.length > 0) { %>
                     <% donations.forEach(function(don) { %>
+                        <% let isSafe = (don.hiv === 'Non-Reactive' && don.hbsag === 'Non-Reactive' && don.hcv === 'Non-Reactive' && don.syphilis === 'Non-Reactive'); %>
                         <tr>
                             <td><%= don.donationDate ? new Date(don.donationDate).toDateString() : 'N/A' %></td>
                             <td><%= don.donorId ? don.donorId.name : 'Unknown' %></td>
                             <td><%= don.donorId ? don.donorId.mobile : 'N/A' %></td>
                             <td><%= don.bagNumber %></td>
-                            <td>
-                                <span class="bg-badge"><%= don.donorId ? don.donorId.bloodGroup : 'N/A' %></span>
-                            </td>
-                            <% let isSafe = (don.hiv === 'Non-Reactive' && don.hbsag === 'Non-Reactive' && don.hcv === 'Non-Reactive' && don.syphilis === 'Non-Reactive'); %>
+                            <td><span class="bg-badge"><%= don.donorId ? don.donorId.bloodGroup : 'N/A' %></span></td>
                             <td style="color: <%= isSafe ? 'green' : 'red' %>; font-weight: bold;">
                                 <%= isSafe ? 'Safe' : 'Reactive' %>
                             </td>
-                            
-                            <!-- 🛠️ ACTIONS (View, Edit, Delete) -->
                             <td style="white-space: nowrap;">
-                                <!-- VIEW BUTTON WITH DATA ATTRIBUTES -->
+                                
                                 <button class="action-btn btn-view" onclick="openModal(this)"
                                     data-name="<%= don.donorId ? don.donorId.name : 'N/A' %>"
                                     data-fname="<%= don.donorId ? don.donorId.fatherName : 'N/A' %>"
@@ -111,7 +116,8 @@
                                     data-address="<%= don.donorId ? don.donorId.address : 'N/A' %>"
                                     data-date="<%= don.donationDate ? new Date(don.donationDate).toDateString() : 'N/A' %>"
                                     data-bag="<%= don.bagNumber %>"
-                                    data-type="<%= don.donationType || 'Voluntary' %>">
+                                    data-type="<%= don.donationType || 'Voluntary' %>"
+                                    data-safe="<%= isSafe ? 'Safe ✅' : 'Reactive ❌' %>">
                                     View 👁️
                                 </button>
                                 
@@ -127,35 +133,34 @@
         </table>
     </div>
 
-    <!-- 🖼️ THE POPUP MODAL (Hidden By Default) -->
     <div id="donorModal" class="modal-overlay">
         <div class="modal-box">
             <button class="close-btn" onclick="closeModal()">&times;</button>
-            <div class="modal-header">🩸 Full Donor Details</div>
+            <div class="modal-header">🩸 Full Donor Profile</div>
             
             <div class="detail-row"><span class="detail-label">Donor Name:</span> <span class="detail-value" id="m-name"></span></div>
             <div class="detail-row"><span class="detail-label">Father's Name:</span> <span class="detail-value" id="m-fname"></span></div>
             <div class="detail-row"><span class="detail-label">Mobile:</span> <span class="detail-value" id="m-mobile"></span></div>
             <div class="detail-row"><span class="detail-label">Aadhaar No:</span> <span class="detail-value" id="m-aadhaar"></span></div>
             <div class="detail-row"><span class="detail-label">Age & Gender:</span> <span class="detail-value" id="m-age-gender"></span></div>
-            <div class="detail-row"><span class="detail-label">Blood Group:</span> <span class="detail-value" style="color:red; font-weight:bold;" id="m-bg"></span></div>
+            <div class="detail-row"><span class="detail-label">Blood Group:</span> <span class="detail-value" style="color:red; font-size:16px;" id="m-bg"></span></div>
             <div class="detail-row"><span class="detail-label">Address:</span> <span class="detail-value" id="m-address"></span></div>
-            <div style="margin-top: 15px; background: #f8f9fa; padding: 10px; border-radius: 5px;">
-                <div class="detail-row"><span class="detail-label">Donation Date:</span> <span class="detail-value" id="m-date"></span></div>
-                <div class="detail-row"><span class="detail-label">Bag Number:</span> <span class="detail-value" id="m-bag"></span></div>
-                <div class="detail-row"><span class="detail-label">Donation Type:</span> <span class="detail-value" id="m-type"></span></div>
+            
+            <div class="history-section">
+                <div class="history-title">📅 Past Donation History (<span id="m-count">0</span> Times)</div>
+                <div id="m-history-table-container">
+                    </div>
             </div>
+
         </div>
     </div>
 
-    <!-- ⚙️ JAVASCRIPT FOR SEARCH, FILTER & MODAL -->
     <script>
-        // Search & Filter Logic
+        // 1. Search & Filter Logic
         function filterTable() {
             let searchText = document.getElementById("searchInput").value.toLowerCase();
             let bgFilter = document.getElementById("bgFilter").value;
-            let table = document.getElementById("recordsTable");
-            let tr = table.getElementsByTagName("tr");
+            let tr = document.getElementById("recordsTable").getElementsByTagName("tr");
 
             for (let i = 1; i < tr.length; i++) {
                 let tdName = tr[i].getElementsByTagName("td")[1];   
@@ -163,32 +168,65 @@
                 let tdBlood = tr[i].getElementsByTagName("td")[4];  
                 
                 if (tdName && tdMobile && tdBlood) {
-                    let nameText = tdName.textContent || tdName.innerText;
-                    let mobileText = tdMobile.textContent || tdMobile.innerText;
-                    let bloodText = tdBlood.textContent || tdBlood.innerText;
+                    let nameText = (tdName.textContent || tdName.innerText).toLowerCase();
+                    let mobileText = (tdMobile.textContent || tdMobile.innerText).toLowerCase();
+                    let bloodText = (tdBlood.textContent || tdBlood.innerText).trim();
                     
-                    let matchesSearch = nameText.toLowerCase().includes(searchText) || mobileText.toLowerCase().includes(searchText);
-                    let matchesBg = (bgFilter === "All" || bloodText.trim() === bgFilter);
+                    let matchesSearch = nameText.includes(searchText) || mobileText.includes(searchText);
+                    let matchesBg = (bgFilter === "All" || bloodText === bgFilter);
 
-                    if (matchesSearch && matchesBg) { tr[i].style.display = ""; } 
-                    else { tr[i].style.display = "none"; }
+                    tr[i].style.display = (matchesSearch && matchesBg) ? "" : "none";
                 }
             }
         }
 
-        // Modal Logic
+        // 2. Modal & History Logic
         function openModal(btn) {
+            let mobile = btn.getAttribute("data-mobile");
+
+            // Basic Details Set karo
             document.getElementById("m-name").innerText = btn.getAttribute("data-name");
             document.getElementById("m-fname").innerText = btn.getAttribute("data-fname");
-            document.getElementById("m-mobile").innerText = btn.getAttribute("data-mobile");
+            document.getElementById("m-mobile").innerText = mobile;
             document.getElementById("m-aadhaar").innerText = btn.getAttribute("data-aadhaar");
             document.getElementById("m-age-gender").innerText = btn.getAttribute("data-age") + " Yrs, " + btn.getAttribute("data-gender");
             document.getElementById("m-bg").innerText = btn.getAttribute("data-bg");
             document.getElementById("m-address").innerText = btn.getAttribute("data-address");
-            document.getElementById("m-date").innerText = btn.getAttribute("data-date");
-            document.getElementById("m-bag").innerText = btn.getAttribute("data-bag");
-            document.getElementById("m-type").innerText = btn.getAttribute("data-type");
 
+            // 🔍 History Generator (Mobile Number se dhoondo)
+            let allBtns = document.querySelectorAll('.btn-view');
+            let historyHtml = '<table class="history-table"><tr><th>Date</th><th>Bag No</th><th>Type</th><th>Result</th></tr>';
+            let donationCount = 0;
+
+            allBtns.forEach(function(b) {
+                // Agar button ka mobile number click kiye gaye donor se match karta hai
+                if (mobile !== 'N/A' && b.getAttribute('data-mobile') === mobile) {
+                    historyHtml += '<tr>';
+                    historyHtml += '<td>' + b.getAttribute('data-date') + '</td>';
+                    historyHtml += '<td>' + b.getAttribute('data-bag') + '</td>';
+                    historyHtml += '<td>' + b.getAttribute('data-type') + '</td>';
+                    
+                    let safeStatus = b.getAttribute('data-safe');
+                    let color = safeStatus.includes('Safe') ? 'green' : 'red';
+                    historyHtml += '<td style="color:' + color + '; font-weight:bold;">' + safeStatus + '</td>';
+                    
+                    historyHtml += '</tr>';
+                    donationCount++;
+                }
+            });
+            historyHtml += '</table>';
+
+            // Agar galti se kisi ka mobile nahi hai, to kam se kam current record dikha do
+            if(donationCount === 0) {
+                historyHtml = '<p style="text-align:center; color:#777; margin:5px;">History not available.</p>';
+                donationCount = 1;
+            }
+
+            // History aur Count ko Modal me dal do
+            document.getElementById("m-history-table-container").innerHTML = historyHtml;
+            document.getElementById("m-count").innerText = donationCount;
+
+            // Modal dikhao
             document.getElementById("donorModal").style.display = "flex";
         }
 
